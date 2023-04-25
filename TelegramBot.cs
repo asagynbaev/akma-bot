@@ -1,11 +1,12 @@
 ﻿using System;
+using OpenAI_API.Chat;
 using Telegram.Bot;
 
 namespace MindMate
 {
 	public class TelegramBot
 	{
-        private static TelegramBotClient client { get; set; }
+        private static TelegramBotClient? client { get; set; }
 
         public static TelegramBotClient GetTelegramBot()
         {
@@ -17,6 +18,15 @@ namespace MindMate
             }
             client = new TelegramBotClient(bot_key);
             return client;
+        }
+
+        public static async void DoConversation(long chatId, Conversation conversation, string userMessage)
+        {
+            Conversation chat = conversation;
+
+            chat.AppendUserInput(userMessage);
+            string response = await chat.GetResponseFromChatbotAsync();
+            await client.SendTextMessageAsync(chatId, response);
         }
     }
 }
