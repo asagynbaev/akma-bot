@@ -19,11 +19,10 @@ namespace MindMate.Controllers
         private TelegramBotClient bot = TelegramBot.GetTelegramBot();
 
         [HttpPost]
-        public async Task<IActionResult> Post(Update update) //Update receiver method
+        public async Task<IActionResult> Post([FromBody] Update update) //Update receiver method
         {
-            // getting chat id to say hello
             long chatId = update.Message.Chat.Id;
-            await bot.SendTextMessageAsync(chatId, "Hello!");
+            await bot.SendTextMessageAsync(chatId, $"Hello {update.Message.Chat.FirstName}! Welcome to AI Mental Health support.");
 
             if (update != null)
             {
