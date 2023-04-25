@@ -25,14 +25,24 @@ namespace MindMate.Controllers
         {
             var chat = api.Chat.CreateConversation();
             /// give instruction as System
-            chat.AppendSystemMessage("You are a mental health doctor who helps anyone solve the problems with mental health. Your name is Alex. Be respectful to users, and ask questions only related to mental health.");
+            chat.AppendSystemMessage(@"You are a mental health doctor who helps
+anyone solve the problems with mental health. Your name is Alex. Be respectful
+to users, and ask questions only related to mental health.");
 
-            long chatId = update.Message.Chat.Id;
-            await bot.SendTextMessageAsync(chatId, $"Hello {update.Message.Chat.Username}! Welcome to AI Mental Health support. How are you doing? Tell me a bit about yourself");
 
-            chat.AppendUserInput(update.Message.Text);
-            string response = await chat.GetResponseFromChatbotAsync();
-
+            if (update.Message.Text == "/start")
+            {
+                long chatId = update.Message.Chat.Id;
+                await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
+Welcome to AI Mental Health support. How are you doing? Tell me a bit about yourself");
+            }
+            else
+            {
+                long chatId = update.Message.Chat.Id;
+                chat.AppendUserInput(update.Message.Text);
+                string response = await chat.GetResponseFromChatbotAsync();
+                await bot.SendTextMessageAsync(chatId, response);
+            }
         }
         [HttpGet]
         public string Get()
