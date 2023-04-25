@@ -16,9 +16,15 @@ namespace MindMate.Controllers
             _logger = logger;
         }
 
+        private TelegramBotClient bot = TelegramBot.GetTelegramBot();
+
         [HttpPost]
-        public IActionResult Post(Update update) //Update receiver method
+        public async Task<IActionResult> Post(Update update) //Update receiver method
         {
+            // getting chat id to say hello
+            long chatId = update.Message.Chat.Id;
+            await bot.SendTextMessageAsync(chatId, "Hello!");
+
             if (update != null)
             {
                 if (update.Message != null)
