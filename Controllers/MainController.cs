@@ -17,7 +17,7 @@ namespace MindMate.Controllers
         }
 
         [HttpPost]
-        public void Post(Update update) //Update receiver method
+        public IActionResult Post(Update update) //Update receiver method
         {
             if (update != null)
             {
@@ -25,12 +25,19 @@ namespace MindMate.Controllers
                 {
                     _logger.LogInformation(update.Message.Text);
                     Console.WriteLine(update.Message.Text);
+                    return Ok($"Your message is: {update.Message.Text}");
                 }
                 else
+                {
                     _logger.LogInformation("update.Message is null");
+                    return Ok($"update.Message is null");
+                }
             }
             else
+            {
                 _logger.LogInformation("update is null");
+                return Ok($"update.Message is null");
+            }
         }
         [HttpGet]
         public string Get()
