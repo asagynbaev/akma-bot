@@ -9,11 +9,13 @@ namespace MindMate
 
         public static TelegramBotClient GetTelegramBot()
         {
+            string bot_key = DotNetEnv.Env.GetString("TG_BOT");
+
             if (client != null)
             {
                 return client;
             }
-            client = new TelegramBotClient("6001984916:AAEGRpus9lLtFyAUnthmsECTK4wiRmB8qmY");
+            client = new TelegramBotClient(bot_key);
             return client;
         }
     }
