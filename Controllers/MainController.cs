@@ -11,7 +11,6 @@ namespace MindMate.Controllers
     public class MainController : ControllerBase
     {
         private readonly ILogger<MainController> _logger;
-        private Dictionary<long, Conversation>? values;
         OpenAIAPI api = new OpenAIAPI(new APIAuthentication(DotNetEnv.Env.GetString("OPEN_AI_API")));
 
         public MainController(ILogger<MainController> logger)
@@ -31,38 +30,18 @@ namespace MindMate.Controllers
                 {
                     long chatId = update.Message.Chat.Id;
                     await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
-                        Welcome to AI Mental Health support.My name is Alex.
-                        How are you doing? Tell me a bit about yourself");
+Welcome to AI Mental Health support.My name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
+How are you doing? I need more details about you. Tell me what is your name and how old are you.");
                 }
                 else
                 {
+                    var conversation = api.Chat.CreateConversation();
                     long chatId = update.Message.Chat.Id;
-
-                    if(values != null)
-                    {
-                        bool DictionaryHasChatId = values.ContainsKey(chatId);
-                        if (!DictionaryHasChatId)
-                        {
-                            Conversation conversation = values[chatId];
-                            TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
-                        }
-                        else
-                        {
-                            Conversation conversation = api.Chat.CreateConversation();
-                            values.Add(chatId, conversation);
-                            TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
-                        }
-                    }
-                    else
-                    {
-                        Conversation conversation = api.Chat.CreateConversation();
-                        values.Add(chatId, conversation);
-                        TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
-                    }
+                    TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
                 }
             }
-            
         }
+
         [HttpGet("init")]
         public string InitChatGPT()
         {
@@ -70,26 +49,11 @@ namespace MindMate.Controllers
             var chat = api.Chat.CreateConversation();
 
             /// give instruction as System
-            chat.AppendSystemMessage(@"You are a mental health doctor who helps
-                anyone solve the problems with mental health. Your name is Alex.
-                Be respectful to users, and ask questions only related to mental health.");
+            chat.AppendSystemMessage($@"You are a mental health doctor who helps
+anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
+Be respectful to users, and ask questions only related to mental health.");
 
             return "Successfully initialized";
-        }
-
-        [HttpGet("get-chats")]
-        public List<long> GetChats()
-        {
-            List<long> res = new List<long>();
-            if(values != null)
-            {
-                foreach (var item in values)
-                {
-                    res.Add(item.Key);
-                }
-            }
-
-            return res;
         }
     }
 }
