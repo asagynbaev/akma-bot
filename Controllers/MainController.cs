@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using OpenAI_API;
 using OpenAI_API.Chat;
 using Telegram.Bot;
@@ -28,6 +29,11 @@ namespace MindMate.Controllers
                 // Check if this is a first interaction
                 if (update.Message.Text == "/start")
                 {
+                    var chat = api.Chat.CreateConversation();
+                    chat.AppendUserInput($@"You are a mental health doctor who helps
+anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
+Be respectful to users, and ask questions only related to mental health.");
+
                     long chatId = update.Message.Chat.Id;
                     await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
 Welcome to AI Mental Health support.My name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
@@ -48,8 +54,7 @@ How are you doing? I need more details about you. Tell me what is your name and 
             // ChatGPT initialization
             var chat = api.Chat.CreateConversation();
 
-            /// give instruction as System
-            chat.AppendSystemMessage($@"You are a mental health doctor who helps
+            chat.AppendUserInput($@"You are a mental health doctor who helps
 anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
 Be respectful to users, and ask questions only related to mental health.");
 
