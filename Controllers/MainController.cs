@@ -24,27 +24,36 @@ namespace MindMate.Controllers
         [HttpPost("talk")]
         public async void Post([FromBody] Update update) //Update receiver method
         {
-            if(update.Message.Text != null)
+            try
             {
-                // Check if this is a first interaction
-                if (update.Message.Text == "/start")
+                _logger.LogInformation($"Message from user: {update.Message.Text}");
+
+                if (update.Message.Text != null)
                 {
-                    var chat = api.Chat.CreateConversation();
-                    chat.AppendUserInput($@"You are a mental health doctor who helps
+                    // Check if this is a first interaction
+                    if (update.Message.Text == "/start")
+                    {
+                        var chat = api.Chat.CreateConversation();
+                        chat.AppendUserInput($@"You are a mental health doctor who helps
 anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
 Be respectful to users, and ask questions only related to mental health.");
 
-                    long chatId = update.Message.Chat.Id;
-                    await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
+                        long chatId = update.Message.Chat.Id;
+                        await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
 Welcome to AI Mental Health support.My name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
 How are you doing? I need more details about you. Tell me what is your name and how old are you.");
+                    }
+                    else
+                    {
+                        var conversation = api.Chat.CreateConversation();
+                        long chatId = update.Message.Chat.Id;
+                        TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
+                    }
                 }
-                else
-                {
-                    var conversation = api.Chat.CreateConversation();
-                    long chatId = update.Message.Chat.Id;
-                    TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
-                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
             }
         }
 
