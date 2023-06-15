@@ -20,13 +20,15 @@ namespace MindMate
             return client;
         }
 
-        public static async void DoConversation(long chatId, Conversation conversation, string userMessage)
+        public static async Task<string> DoConversation(long chatId, Conversation conversation, string userMessage)
         {
             Conversation chat = conversation;
 
             chat.AppendUserInput(userMessage);
             string response = await chat.GetResponseFromChatbotAsync();
             await client.SendTextMessageAsync(chatId, response);
+
+            return response;
         }
     }
 }

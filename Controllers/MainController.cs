@@ -1,7 +1,5 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OpenAI_API;
-using OpenAI_API.Chat;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -12,42 +10,55 @@ namespace MindMate.Controllers
     public class MainController : ControllerBase
     {
         private readonly ILogger<MainController> _logger;
+        private readonly DialogContext _context;
         OpenAIAPI api = new OpenAIAPI(new APIAuthentication(DotNetEnv.Env.GetString("OPEN_AI_API")));
 
-        public MainController(ILogger<MainController> logger)
+        public MainController(ILogger<MainController> logger, DialogContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         private TelegramBotClient bot = TelegramBot.GetTelegramBot();
 
         [HttpPost("talk")]
-        public async void Post([FromBody] Update update) //Update receiver method
+        public async Task Post([FromBody] Update update) //Update receiver method
         {
             try
             {
                 _logger.LogInformation($"Message from user: {update.Message.Text}");
+
+                var conversation = api.Chat.CreateConversation();
+                long chatId = update.Message.Chat.Id;
 
                 if (update.Message.Text != null)
                 {
                     // Check if this is a first interaction
                     if (update.Message.Text == "/start")
                     {
-                        var chat = api.Chat.CreateConversation();
-                        chat.AppendUserInput($@"You are a mental health doctor who helps
-anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
-Be respectful to users, and ask questions only related to mental health.");
+                        conversation.AppendUserInput($@"Ты - Роза, Вы врач-психиатр, который помогает
+                            любому человеку решить проблемы с психическим здоровьем. Тебя зовут Роза.
+                            Проявляйте уважение к пользователям и задавайте вопросы, связанные только с психическим здоровьем.");
 
-                        long chatId = update.Message.Chat.Id;
-                        await bot.SendTextMessageAsync(chatId, $@"Hello {update.Message.Chat.Username}!
-Welcome to AI Mental Health support.My name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
-How are you doing? I need more details about you. Tell me what is your name and how old are you.");
+                        await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}!
+                            Добро пожаловать в службу поддержки психического здоровья с помощью искусственного интеллекта.Меня зовут Роза.
+                            Как дела? Давай познакомимся поближе! Скажи мне, как тебя зовут и сколько тебе лет.");
                     }
                     else
                     {
-                        var conversation = api.Chat.CreateConversation();
-                        long chatId = update.Message.Chat.Id;
-                        TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
+                        string result = await TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
+
+                        // Запись диалога в базу данных
+                        var dialog = new Dialog
+                        {
+                            UserId = update.Message.Chat.Username,
+                            UserMessage = update.Message.Text,
+                            BotResponse =  result,
+                            Timestamp = DateTime.UtcNow
+                        };
+
+                        _context.Dialogs.Add(dialog);
+                        await _context.SaveChangesAsync();
                     }
                 }
             }
@@ -63,12 +74,11 @@ How are you doing? I need more details about you. Tell me what is your name and 
             // ChatGPT initialization
             var chat = api.Chat.CreateConversation();
 
-            chat.AppendUserInput($@"You are a mental health doctor who helps
-anyone solve the problems with mental health. Your name is {DotNetEnv.Env.GetString("ASSISTANT_NAME")}.
-Be respectful to users, and ask questions only related to mental health.");
+            chat.AppendSystemMessage($@"Ты - Роза, Вы врач-психиатр, который помогает
+                любому человеку решить проблемы с психическим здоровьем. Тебя зовут Роза.
+                Проявляйте уважение к пользователям и задавайте вопросы, связанные только с психическим здоровьем.");
 
             return "Successfully initialized";
         }
     }
 }
-
