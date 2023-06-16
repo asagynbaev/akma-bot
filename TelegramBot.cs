@@ -1,6 +1,7 @@
 ﻿using System;
 using OpenAI_API.Chat;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace MindMate
 {
@@ -25,11 +26,18 @@ namespace MindMate
             Conversation chat = conversation;
 
             chat.AppendUserInput(userMessage);
+
+            // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
+            var message = await client.SendTextMessageAsync(chatId, "Люссид обрабатывает ваш запрос...");
+            await Task.Delay(1000); // Ждем 1 секунду для имитации обработки
+
+            await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
             string response = await chat.GetResponseFromChatbotAsync();
-            await client.SendTextMessageAsync(chatId, response);
+
+            // Обновляем сообщение с новым ответом
+            await client.EditMessageTextAsync(chatId, message.MessageId, response);
 
             return response;
         }
     }
 }
-
