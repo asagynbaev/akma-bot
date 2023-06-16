@@ -14,9 +14,8 @@ namespace MindMate
             string bot_key = DotNetEnv.Env.GetString("TG_BOT");
 
             if (client != null)
-            {
                 return client;
-            }
+                
             client = new TelegramBotClient(bot_key);
             return client;
         }

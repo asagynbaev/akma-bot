@@ -10,6 +10,6 @@ namespace MindMate
             options.UseNpgsql(DotNetEnv.Env.GetString("DB_CONNECTION_STRING"));
         }
 
-        public DbSet<Dialog> Dialogs { get; set; }
+        public DbSet<Dialog>? Dialogs { get; set; }
     }
 }
