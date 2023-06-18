@@ -1,7 +1,5 @@
-﻿using System;
-using OpenAI_API.Chat;
+﻿using OpenAI_API.Chat;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 
 namespace MindMate
 {
@@ -20,6 +18,14 @@ namespace MindMate
             return client;
         }
 
+        // Метод для отправки сообщения конкретному пользователю
+        public static async Task<string> DoConversation(long chatId, string message)
+        {
+            await client.SendTextMessageAsync(chatId, message);
+            return "Ok";
+        }
+
+        // Метод для отрпавки сообщения в рамках беседы с чат ботом
         public static async Task<string> DoConversation(long chatId, Conversation conversation, string userMessage)
         {
             Conversation chat = conversation;

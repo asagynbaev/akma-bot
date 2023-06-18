@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MindMate
+namespace MindMate.Entities
 {
     // Модель для записи диалогов
     public class Dialog
@@ -8,7 +8,7 @@ namespace MindMate
         [Key]
         public int Id { get; set; }
 
-        public string? UserId { get; set; }
+        public string? Username { get; set; }
 
         public string? TelegramUserId { get; set; }
 

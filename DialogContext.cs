@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MindMate.Entities;
 
 namespace MindMate
 {
@@ -11,5 +12,7 @@ namespace MindMate
         }
 
         public DbSet<Dialog>? Dialogs { get; set; }
+
+        public DbSet<Patient>? Patients { get; set; }
     }
 }

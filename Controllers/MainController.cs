@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MindMate.Entities;
 using OpenAI_API;
 using OpenAI_API.Chat;
 using Telegram.Bot;
@@ -43,16 +45,33 @@ namespace MindMate.Controllers
                     {
                         conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
 
+                        var ifExists = await _context.Patients.SingleAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+
+                        // Check if user exists, if not, put it in database
+                        if(ifExists == null)
+                        {
+                            Patient patient = new Patient()
+                            {
+                                Username = update.Message.Chat.Username,
+                                TelegramUserId = update.Message.Chat.Id,
+                                Firstname = update.Message.Chat.FirstName,
+                                Lastname = update.Message.Chat.LastName,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _context.Patients.Add(patient);
+                            await _context.SaveChangesAsync();
+                        }
+
                         await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}! Добро пожаловать в службу поддержки ментального здоровья. Меня зовут Люссид. Как твои дела? Расскажи мне немного о том, с чем ты столкнулся/сталкиваешься в своей жизни, что привело тебя сюда?");
                     }
                     else
                     {
                         string newresult = await TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
 
-                        // Запись диалога в базу данных
                         var dialog = new Dialog
                         {
-                            UserId = update.Message.Chat.Username,
+                            Username = update.Message.Chat.Username,
                             UserMessage = update.Message.Text,
                             BotResponse =  newresult,
                             Timestamp = DateTime.UtcNow,
@@ -69,6 +88,18 @@ namespace MindMate.Controllers
                 _logger.LogError(ex.Message);
             }
         }
+        
+        [HttpGet("send-notification")]
+        public async Task SendReminderMessage()
+        {
+            List<Patient> patients = await _context.Patients.ToListAsync();
+            var message = "";
+            foreach(var item in patients)
+            {
+                string newresult = await TelegramBot.DoConversation(item.TelegramUserId, message);
+            }
+        }
+
         private Conversation GetOrCreateConversation(long chatId)
         {
             if (_userConversations.TryGetValue(chatId, out var conversation))
