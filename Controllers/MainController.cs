@@ -45,9 +45,7 @@ namespace MindMate.Controllers
                     {
                         conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
 
-                        Patient ifExists = await _context.Patients.SingleAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-
-                        _logger.LogInformation($"ifExists is: {ifExists.Id}");
+                        Patient ifExists = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
 
                         // Check if user exists, if not, put it in database
                         if(ifExists == null)
@@ -63,6 +61,7 @@ namespace MindMate.Controllers
 
                             _context.Patients.Add(patient);
                             await _context.SaveChangesAsync();
+                            _logger.LogInformation($"Saved: {patient.Id}, {patient.Username}");
                         }
 
                         await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}! Добро пожаловать в службу поддержки ментального здоровья. Меня зовут Люссид. Как твои дела? Расскажи мне немного о том, с чем ты столкнулся/сталкиваешься в своей жизни, что привело тебя сюда?");
