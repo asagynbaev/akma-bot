@@ -45,7 +45,9 @@ namespace MindMate.Controllers
                     {
                         conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
 
-                        var ifExists = await _context.Patients.SingleAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+                        Patient ifExists = await _context.Patients.SingleAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+
+                        _logger.LogInformation($"ifExists is: {ifExists.Id}");
 
                         // Check if user exists, if not, put it in database
                         if(ifExists == null)
@@ -96,7 +98,10 @@ namespace MindMate.Controllers
             var message = text;
             foreach(var item in patients)
             {
-                string newresult = await TelegramBot.DoConversation(item.TelegramUserId, message);
+                if(item.TelegramUserId != 0)
+                {
+                    await TelegramBot.DoConversation(item.TelegramUserId, message);
+                }
             }
         }
 
