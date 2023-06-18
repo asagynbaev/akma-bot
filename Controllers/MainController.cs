@@ -89,11 +89,11 @@ namespace MindMate.Controllers
             }
         }
         
-        [HttpGet("send-notification")]
-        public async Task SendReminderMessage()
+        [HttpGet("send-notification/{text}")]
+        public async Task SendReminderMessage(string text)
         {
             List<Patient> patients = await _context.Patients.ToListAsync();
-            var message = "";
+            var message = text;
             foreach(var item in patients)
             {
                 string newresult = await TelegramBot.DoConversation(item.TelegramUserId, message);
