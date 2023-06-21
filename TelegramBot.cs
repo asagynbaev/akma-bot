@@ -1,5 +1,6 @@
 ﻿using OpenAI_API.Chat;
 using Telegram.Bot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MindMate
 {
@@ -26,14 +27,20 @@ namespace MindMate
         }
 
         // Метод для отрпавки сообщения в рамках беседы с чат ботом
-        public static async Task<string> DoConversation(long chatId, Conversation conversation, string userMessage)
+        public static async Task<string> DoConversation(long chatId, Conversation conversation, string userMessage, string lang)
         {
             Conversation chat = conversation;
 
             chat.AppendUserInput(userMessage);
+            string holdOnText = "";
+
+            if(lang == "ru")
+                holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
+            else
+                holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_EN");
 
             // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
-            var message = await client.SendTextMessageAsync(chatId, "Люссид обрабатывает ваш запрос... Это может занять несколько секунд, пожалуйста дождитесь ответа.");
+            var message = await client.SendTextMessageAsync(chatId, holdOnText);
             await Task.Delay(1000); // Ждем 1 секунду для имитации обработки
 
             await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
@@ -43,6 +50,14 @@ namespace MindMate
             await client.EditMessageTextAsync(chatId, message.MessageId, response);
 
             return response;
+        }
+
+        // Метод для отрпавки сообщения в рамках беседы с чат ботом
+        public static async Task<string> DoConversation(long chatId, ReplyKeyboardMarkup replyKeyboardMarkup, string userMessage)
+        {
+            // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
+            var message = await client.SendTextMessageAsync(chatId, userMessage, replyMarkup: replyKeyboardMarkup);
+            return "Ok";
         }
     }
 }

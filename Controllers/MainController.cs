@@ -35,10 +35,9 @@ namespace MindMate.Controllers
         {
             try
             { 
+                // Getting user's telegram user id
                 long chatId = update.Message.Chat.Id;
                 
-                var conversation = GetOrCreateConversation(chatId);
-
                 if (update.Message.Text != null)
                 {
                     // Check if this is a first interaction
@@ -49,48 +48,46 @@ namespace MindMate.Controllers
                         {
                             new KeyboardButton[] { "English", "Русский" },
                         })
-                        { ResizeKeyboard = true };
+                        { ResizeKeyboard = true, OneTimeKeyboard = true };
 
-                        // TODO: Отправить пользователю возможность выбрать язык один из двух
-
-                        conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
-
-                        Patient ifExists = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-
-                        // Check if user exists, if not, put it in database
-                        if(ifExists == null)
-                        {
-                            Patient patient = new Patient()
-                            {
-                                Username = update.Message.Chat.Username,
-                                TelegramUserId = update.Message.Chat.Id,
-                                Firstname = update.Message.Chat.FirstName,
-                                Lastname = update.Message.Chat.LastName,
-                                CreatedAt = DateTime.UtcNow
-                            };
-
-                            _context.Patients.Add(patient);
-                            await _context.SaveChangesAsync();
-                            _logger.LogInformation($"Saved: {patient.Id}, {patient.Username}");
-                        }
-
-                        await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}! Добро пожаловать в службу поддержки ментального здоровья. Меня зовут Люссид. Наше с тобой общение является полностью конфиденциальным, и соответствует всем стандартам защиты данных. Как твои дела? Расскажи мне немного о том, с чем ты столкнулся/сталкиваешься в своей жизни, что привело тебя сюда?");
+                        await TelegramBot.DoConversation(update.Message.Chat.Id, replyKeyboardMarkup, "Выберите язык общения. Choose your language.");
                     }
                     else
                     {
-                        string newresult = await TelegramBot.DoConversation(chatId, conversation, update.Message.Text);
+                        // Check if there is a conversation, if not to create
+                        var conversation = GetOrCreateConversation(chatId);
 
-                        var dialog = new Dialog
+                        if(update.Message.Text == "Русский")
                         {
-                            Username = update.Message.Chat.Username,
-                            UserMessage = update.Message.Text,
-                            BotResponse =  newresult,
-                            Timestamp = DateTime.UtcNow,
-                            TelegramUserId = update.Message.Chat.Id.ToString()
-                        };
+                            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+                            conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_RU"));
+                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_RU"));
+                            await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "ru");
+                        }
+                        else if(update.Message.Text == "English")
+                        {
+                            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+                            conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_EN"));
+                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_EN"));
+                            await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "en");
+                        }
+                        else
+                        {
+                            Patient lang = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+                            string newresult = await TelegramBot.DoConversation(chatId, conversation, update.Message.Text, lang.Language);
 
-                        _context.Dialogs.Add(dialog);
-                        _context.SaveChanges();
+                            var dialog = new Dialog
+                            {
+                                Username = update.Message.Chat.Username,
+                                UserMessage = update.Message.Text,
+                                BotResponse =  newresult,
+                                Timestamp = DateTime.UtcNow,
+                                TelegramUserId = update.Message.Chat.Id.ToString()
+                            };
+
+                            _context.Dialogs.Add(dialog);
+                            _context.SaveChanges();
+                            }
                     }
                 }
             }
@@ -171,9 +168,31 @@ namespace MindMate.Controllers
             else
             {
                 conversation = _openAIAPI.Chat.CreateConversation();
-                conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
                 _userConversations.TryAdd(chatId, conversation);
                 return conversation;
+            }
+        }
+
+        private async Task SavePatient(long patientId, string? username, string? firstname, string? lastname, string language)
+        {
+            Patient ifExists = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == patientId);
+
+            // Check if user exists, if not, put it in database
+            if(ifExists == null)
+            {
+                Patient patient = new Patient()
+                {
+                    Username = username,
+                    TelegramUserId = patientId,
+                    Firstname = firstname,
+                    Lastname = lastname,
+                    CreatedAt = DateTime.UtcNow,
+                    Language = language
+                };
+
+                _context.Patients.Add(patient);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Saved: {patient.Id}, {patient.Username}");
             }
         }
     }
