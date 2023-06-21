@@ -19,6 +19,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<DialogContext>();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -29,6 +30,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapHealthChecks("/healthz");
 
 app.UseDeveloperExceptionPage();
 

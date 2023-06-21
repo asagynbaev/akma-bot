@@ -18,7 +18,7 @@ namespace MindMate
             return client;
         }
 
-        // Метод для отправки сообщения конкретному пользователю
+        // Метод для рассылки массовых сообщений
         public static async Task<string> DoConversation(long chatId, string message)
         {
             await client.SendTextMessageAsync(chatId, message);
@@ -33,7 +33,7 @@ namespace MindMate
             chat.AppendUserInput(userMessage);
 
             // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
-            var message = await client.SendTextMessageAsync(chatId, "Люссид обрабатывает ваш запрос...");
+            var message = await client.SendTextMessageAsync(chatId, "Люссид обрабатывает ваш запрос... Это может занять несколько секунд, пожалуйста дождитесь ответа.");
             await Task.Delay(1000); // Ждем 1 секунду для имитации обработки
 
             await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние

@@ -19,5 +19,9 @@ namespace MindMate.Entities
         public string? Language { get; set; }
 
         public DateTime? CreatedAt { get; set; }
+
+        public string? PhoneNumber { get; set; }
+
+        public bool BlockedByUser { get; set; } = false;
     }
 }

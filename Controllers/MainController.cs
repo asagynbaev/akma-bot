@@ -6,6 +6,7 @@ using OpenAI_API;
 using OpenAI_API.Chat;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MindMate.Controllers
 {
@@ -43,6 +44,15 @@ namespace MindMate.Controllers
                     // Check if this is a first interaction
                     if (update.Message.Text == "/start")
                     {
+                        // using Telegram.Bot.Types.ReplyMarkups;
+                        ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
+                        {
+                            new KeyboardButton[] { "English", "Русский" },
+                        })
+                        { ResizeKeyboard = true };
+
+                        // TODO: Отправить пользователю возможность выбрать язык один из двух
+
                         conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS"));
 
                         Patient ifExists = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
@@ -64,7 +74,7 @@ namespace MindMate.Controllers
                             _logger.LogInformation($"Saved: {patient.Id}, {patient.Username}");
                         }
 
-                        await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}! Добро пожаловать в службу поддержки ментального здоровья. Меня зовут Люссид. Как твои дела? Расскажи мне немного о том, с чем ты столкнулся/сталкиваешься в своей жизни, что привело тебя сюда?");
+                        await bot.SendTextMessageAsync(chatId, $@"Привет {update.Message.Chat.Username}! Добро пожаловать в службу поддержки ментального здоровья. Меня зовут Люссид. Как твои дела? Расскажи мне немного о том, с чем ты столкнулся/сталкиваешься в своей жизни, что привело тебя сюда? И кстати, все наше общение является полностью конфиденциальным, и соответствует всем стандартам защиты данных.");
                     }
                     else
                     {
@@ -87,20 +97,68 @@ namespace MindMate.Controllers
             catch(Exception ex)
             {
                 _logger.LogError(ex.Message);
+                _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
+                await _context.SaveChangesAsync();
             }
         }
         
         [HttpGet("send-notification/{text}")]
         public async Task SendReminderMessage(string text)
         {
-            List<Patient> patients = await _context.Patients.ToListAsync();
-            var message = text;
-            foreach(var item in patients)
+            try
             {
-                if(item.TelegramUserId != 0)
+                List<Patient> patients = await _context.Patients.ToListAsync();
+                var message = text;
+                foreach(var item in patients)
                 {
-                    await TelegramBot.DoConversation(item.TelegramUserId, message);
+                    if(item.TelegramUserId != 0)
+                    {
+                        await TelegramBot.DoConversation(item.TelegramUserId, message);
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        [HttpGet("send-message-to-users-who-didnt-use/{text}")]
+        public async Task SendFirst(string text)
+        {
+            long tuserid = 0;
+            try
+            {
+                List<Patient> patients = await _context.Patients.ToListAsync();
+                List<Dialog> dialogs = await _context.Dialogs.ToListAsync();
+
+                // Retrieve patients that do not exist in the Dialog table
+                IEnumerable<Patient> patientsNotInDialog = patients.Where(p => !dialogs.Any(d => d.TelegramUserId == p.TelegramUserId.ToString() && d.TelegramUserId != null));
+
+                var message = text;
+                foreach(var item in patients)
+                {
+                    if(item.TelegramUserId != 0)
+                    {
+                        tuserid = item.TelegramUserId;
+                        await TelegramBot.DoConversation(item.TelegramUserId, message);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                if(ex.Message == "Forbidden: bot was blocked by the user")
+                {
+                    var patient = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == tuserid);
+                    patient.BlockedByUser = true;
+                    await _context.SaveChangesAsync();
+                }
+                _logger.LogError(ex.Message);
+                var error = new ErrorLogs(ex.Message, ex.InnerException.Message, "send-message-to-users-who-didnt-use");
+                _context.Errors.Add(error);
+                await _context.SaveChangesAsync();
             }
         }
 
