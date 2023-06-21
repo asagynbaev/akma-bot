@@ -56,19 +56,18 @@ namespace MindMate.Controllers
                     {
                         // Check if there is a conversation, if not to create
                         var conversation = GetOrCreateConversation(chatId);
+                        ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
 
                         if(update.Message.Text == "Русский")
                         {
-                            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
                             conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_RU"));
-                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_RU"));
+                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_RU"), replyMarkup: replyKeyboardRemove);
                             await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "ru");
                         }
                         else if(update.Message.Text == "English")
                         {
-                            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
                             conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_EN"));
-                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_EN"));
+                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_EN"), replyMarkup: replyKeyboardRemove);
                             await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "en");
                         }
                         else
@@ -137,7 +136,7 @@ namespace MindMate.Controllers
                 var message = text;
                 foreach(var item in patients)
                 {
-                    if(item.TelegramUserId != 0)
+                    if(item.TelegramUserId != 0 && !item.BlockedByUser)
                     {
                         tuserid = item.TelegramUserId;
                         await TelegramBot.DoConversation(item.TelegramUserId, message);
