@@ -1,4 +1,5 @@
-﻿using OpenAI_API.Chat;
+﻿using Newtonsoft.Json;
+using OpenAI_API.Chat;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -43,6 +44,34 @@ namespace MindMate
             //await Task.Delay(3000);
 
             return "address should be here";
+        }
+
+        public static async Task<EvaluationResult> GetEvaluationResult (string address)
+        {
+            string apiUrl = "https://akma-aml.azurewebsites.net/tron/check_address/" + address;
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        EvaluationResult result = JsonConvert.DeserializeObject<EvaluationResult>(jsonResponse);
+                        return result;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
         }
 
         // Метод для отрпавки сообщения в рамках беседы с чат ботом

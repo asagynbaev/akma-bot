@@ -79,7 +79,7 @@ namespace MindMate.Controllers
 
                             if (IsValidUsdtTrc20Address(update.Message.Text))
                             {
-                                var result = await GetEvaluationResult(update.Message.Text);
+                                var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
                                 if(result != null)
                                 {
                                     await TelegramBot.DoConversation(chatId, $"Final Evaluation: {result.evaluation.FinalEvaluation} \n Transactions: {result.evaluation.Transactions} \n Blacklist: {result.evaluation.Blacklist} \n Balance: {result.evaluation.Balance}", ParseMode.Html);
@@ -210,34 +210,6 @@ namespace MindMate.Controllers
 
             Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
             return regex.IsMatch(address);
-        }
-
-        public async Task<EvaluationResult> GetEvaluationResult (string address)
-        {
-            string apiUrl = "https://akma-aml.azurewebsites.net/tron/check_address/" + address;
-            try
-            {
-                using (HttpClient httpClient = new HttpClient())
-                {
-                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string jsonResponse = await response.Content.ReadAsStringAsync();
-                        EvaluationResult result = JsonConvert.DeserializeObject<EvaluationResult>(jsonResponse);
-                        return result;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
-                        return null;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                return null;
-                Console.WriteLine($"Exception: {ex.Message}");
-            }
         }
     }
 }
