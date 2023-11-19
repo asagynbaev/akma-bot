@@ -1,5 +1,6 @@
 ﻿using OpenAI_API.Chat;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MindMate
@@ -20,44 +21,36 @@ namespace MindMate
         }
 
         // Метод для рассылки массовых сообщений
-        public static async Task<string> DoConversation(long chatId, string message)
-        {
-            await client.SendTextMessageAsync(chatId, message);
-            return "Ok";
-        }
+        // public static async Task<string> DoConversation(long chatId, string message)
+        // {
+        //     await client.SendTextMessageAsync(chatId, message);
+        //     return "Ok";
+        // }
 
         // Метод для отрпавки сообщения в рамках беседы с чат ботом
-        public static async Task<string> DoConversation(long chatId, Conversation conversation, string userMessage, string lang)
+        public static async Task<string> DoConversation(long chatId, string userMessage, ParseMode mode)
         {
-            Conversation chat = conversation;
-
-            chat.AppendUserInput(userMessage);
-            string holdOnText = "";
-
-            if(lang == "ru")
-                holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
-            else
-                holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_EN");
+            string holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
 
             // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
-            var message = await client.SendTextMessageAsync(chatId, holdOnText);
-            await Task.Delay(1000); // Ждем 1 секунду для имитации обработки
+            var message = await client.SendTextMessageAsync( chatId: chatId, text: holdOnText, parseMode: mode);
 
             await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
-            string response = await chat.GetResponseFromChatbotAsync();
+            await Task.Delay(3000); // Ждем 1 секунду для имитации обработки
 
             // Обновляем сообщение с новым ответом
-            await client.EditMessageTextAsync(chatId, message.MessageId, response);
+            await client.EditMessageTextAsync(chatId: chatId, messageId: message.MessageId, text: userMessage, parseMode: mode);
+            //await Task.Delay(3000);
 
-            return response;
+            return "address should be here";
         }
 
         // Метод для отрпавки сообщения в рамках беседы с чат ботом
-        public static async Task<string> DoConversation(long chatId, ReplyKeyboardMarkup replyKeyboardMarkup, string userMessage)
-        {
-            // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
-            var message = await client.SendTextMessageAsync(chatId, userMessage, replyMarkup: replyKeyboardMarkup);
-            return "Ok";
-        }
+        // public static async Task<string> DoConversation(long chatId, ReplyKeyboardMarkup replyKeyboardMarkup, string userMessage)
+        // {
+        //     // Отправляем сообщение с информацией о том, что бот обрабатывает запрос
+        //     var message = await client.SendTextMessageAsync(chatId, userMessage, replyMarkup: replyKeyboardMarkup);
+        //     return "Ok";
+        // }
     }
 }

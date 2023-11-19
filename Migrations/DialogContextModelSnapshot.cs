@@ -73,7 +73,7 @@ namespace MindMate.Migrations
                     b.ToTable("Errors");
                 });
 
-            modelBuilder.Entity("MindMate.Entities.Patient", b =>
+            modelBuilder.Entity("MindMate.Entities.P2PUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -83,6 +83,9 @@ namespace MindMate.Migrations
 
                     b.Property<bool>("BlockedByUser")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Checks")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -107,7 +110,7 @@ namespace MindMate.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Patients");
+                    b.ToTable("Users");
                 });
 #pragma warning restore 612, 618
         }

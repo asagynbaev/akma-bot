@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MindMate.Migrations
 {
     [DbContext(typeof(DialogContext))]
-    [Migration("20230620092657_ErrorLogs")]
-    partial class ErrorLogs
+    [Migration("20231118155601_Akma")]
+    partial class Akma
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -76,13 +76,19 @@ namespace MindMate.Migrations
                     b.ToTable("Errors");
                 });
 
-            modelBuilder.Entity("MindMate.Entities.Patient", b =>
+            modelBuilder.Entity("MindMate.Entities.P2PUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("BlockedByUser")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Checks")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -97,7 +103,6 @@ namespace MindMate.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("TelegramUserId")
@@ -108,7 +113,7 @@ namespace MindMate.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Patients");
+                    b.ToTable("Users");
                 });
 #pragma warning restore 612, 618
         }

@@ -11,10 +11,10 @@ namespace MindMate
             options.UseNpgsql(DotNetEnv.Env.GetString("DB_CONNECTION_STRING"));
         }
 
-        public DbSet<Dialog>? Dialogs { get; set; }
+        public DbSet<Dialog> Dialogs { get; set; }
 
-        public DbSet<Patient>? Patients { get; set; }
+        public DbSet<P2PUser> Users { get; set; }
 
-        public DbSet<ErrorLogs>? Errors { get; set; }
+        public DbSet<ErrorLogs> Errors { get; set; }
     }
 }

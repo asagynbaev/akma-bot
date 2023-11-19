@@ -1,12 +1,11 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MindMate.Entities;
-using OpenAI_API;
-using OpenAI_API.Chat;
+using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Types.Enums;
 
 namespace MindMate.Controllers
 {
@@ -16,15 +15,15 @@ namespace MindMate.Controllers
     {
         private readonly ILogger<MainController> _logger;
         private readonly DialogContext _context;
-        private static readonly ConcurrentDictionary<long, Conversation> _userConversations = new ConcurrentDictionary<long, Conversation>();
-        private readonly OpenAIAPI _openAIAPI;
+        //private static readonly ConcurrentDictionary<long, Conversation> _userConversations = new ConcurrentDictionary<long, Conversation>();
+        //private readonly OpenAIAPI _openAIAPI;
         private readonly TelegramBotClient _telegramBotClient;
 
         public MainController(ILogger<MainController> logger, DialogContext context)
         {
             _logger = logger;
             _context = context;
-            _openAIAPI = new OpenAIAPI(new APIAuthentication(DotNetEnv.Env.GetString("OPEN_AI_API")));
+            //_openAIAPI = new OpenAIAPI(new APIAuthentication(DotNetEnv.Env.GetString("OPEN_AI_API")));
             _telegramBotClient = TelegramBot.GetTelegramBot();
         }
 
@@ -43,43 +42,66 @@ namespace MindMate.Controllers
                     // Check if this is a first interaction
                     if (update.Message.Text == "/start")
                     {
-                        // using Telegram.Bot.Types.ReplyMarkups;
-                        ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
-                        {
-                            new KeyboardButton[] { "English", "Русский" },
-                        })
-                        { ResizeKeyboard = true, OneTimeKeyboard = true };
-
-                        await TelegramBot.DoConversation(update.Message.Chat.Id, replyKeyboardMarkup, "Выберите язык общения. Choose your language.");
+                        await SaveUser(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "ru");
+                        await TelegramBot.DoConversation(
+                            update.Message.Chat.Id,
+                            "Привет! 👋 Добро пожаловать в Akma! AML бот для проверки чистоты USDT Tether TRC20 кошелька! \n \n Мы здесь, чтобы обеспечить вас надежным инструментом для проверки кошелька на соответствие стандартам безопасности и предотвращения отмывания денег. Просто отправьте номер вашего кошелька, и мы проверим его статус на предмет чистоты. 🤖🔍🔐 \n \n В качестве приятного бонуса, Akma предоставляет Вам 3 бесплатные проверки:)",
+                            ParseMode.Markdown
+                        );
+                        
                     }
                     else
                     {
-                        // Check if there is a conversation, if not to create
-                        var conversation = GetOrCreateConversation(chatId);
-                        ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+                        if(update.Message.Text == "/balance")
+                        {
+                            P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+                            string newresult = await TelegramBot.DoConversation(chatId, "Количество проверок: " + user.Checks.ToString(), ParseMode.Html);
 
-                        if(update.Message.Text == "Русский")
-                        {
-                            conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_RU"));
-                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_RU"), replyMarkup: replyKeyboardRemove);
-                            await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "ru");
                         }
-                        else if(update.Message.Text == "English")
+                        else if(update.Message.Text == "/check")
                         {
-                            conversation.AppendSystemMessage(DotNetEnv.Env.GetString("BOT_CONTEXT_SETTINGS_EN"));
-                            await bot.SendTextMessageAsync(chatId, DotNetEnv.Env.GetString("HELLO_MESSAGE_EN"), replyMarkup: replyKeyboardRemove);
-                            await SavePatient(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "en");
+                            //P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+                            string newresult = await TelegramBot.DoConversation(chatId, "Для того, чтобы проверить адрес USDT (TRC20), скопируйте его в буфер обмена и вставьте его в поле ниже. \n \n Пример: TG6Udj1YeqXQhr7aSteVf28iWmV1vMtWeA", ParseMode.Html);
+
+                        }
+                        else if(update.Message.Text == "/about")
+                        {
+                            //P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+                            string newresult = await TelegramBot.DoConversation(
+                                chatId, 
+                                "Akma AML Scanner обеспечивает надежную защиту криптовалютных транзакций в сети <b>Tron(TRC20)</b>, применяя интеллектуальный алгоритм анализа для проверки адресов кошельков. \n \n Более подробнее о Akma можно прочитать на сайте: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/\">Akma AML Screener</a>",
+                                ParseMode.Html
+                            );
                         }
                         else
                         {
-                            Patient lang = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-                            string newresult = await TelegramBot.DoConversation(chatId, conversation, update.Message.Text, lang.Language);
+                            //P2PUser lang = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
+
+                            if (IsValidUsdtTrc20Address(update.Message.Text))
+                            {
+                                var result = await GetEvaluationResult(update.Message.Text);
+                                if(result != null)
+                                {
+                                    await TelegramBot.DoConversation(chatId, $"Final Evaluation: {result.evaluation.FinalEvaluation} \n Transactions: {result.evaluation.Transactions} \n Blacklist: {result.evaluation.Blacklist} \n Balance: {result.evaluation.Balance}", ParseMode.Html);
+                                }  
+                                else
+                                {
+                                    await TelegramBot.DoConversation(chatId, "Server Error. Please contact @azimbek.eth", ParseMode.Html);
+                                }
+                            }
+                            else
+                            {
+                                await TelegramBot.DoConversation(chatId, "Invalid USDT TRC20 address.", ParseMode.Html);
+                            }
+
+                            
+                            //string newresult = await TelegramBot.DoConversation(chatId, update.Message.Text, lang.Language);
 
                             var dialog = new Dialog
                             {
                                 Username = update.Message.Chat.Username,
                                 UserMessage = update.Message.Text,
-                                BotResponse =  newresult,
+                                BotResponse =  "write smth here...",
                                 Timestamp = DateTime.UtcNow,
                                 TelegramUserId = update.Message.Chat.Id.ToString()
                             };
@@ -98,28 +120,28 @@ namespace MindMate.Controllers
             }
         }
         
-        [HttpGet("send-notification/{text}")]
-        public async Task SendReminderMessage(string text)
-        {
-            try
-            {
-                List<Patient> patients = await _context.Patients.ToListAsync();
-                var message = text;
-                foreach(var item in patients)
-                {
-                    if(item.TelegramUserId != 0)
-                    {
-                        await TelegramBot.DoConversation(item.TelegramUserId, message);
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
-                await _context.SaveChangesAsync();
-            }
-        }
+        // [HttpGet("send-notification/{text}")]
+        // public async Task SendReminderMessage(string text)
+        // {
+        //     try
+        //     {
+        //         List<P2PUser> patients = await _context.Users.ToListAsync();
+        //         var message = text;
+        //         foreach(var item in patients)
+        //         {
+        //             if(item.TelegramUserId != 0)
+        //             {
+        //                 await TelegramBot.DoConversation(item.TelegramUserId, message);
+        //             }
+        //         }
+        //     }
+        //     catch(Exception ex)
+        //     {
+        //         _logger.LogError(ex.Message);
+        //         _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
+        //         await _context.SaveChangesAsync();
+        //     }
+        // }
 
         [HttpGet("send-message-to-users-who-didnt-use/{text}")]
         public async Task SendFirst(string text)
@@ -127,11 +149,11 @@ namespace MindMate.Controllers
             long tuserid = 0;
             try
             {
-                List<Patient> patients = await _context.Patients.ToListAsync();
+                List<P2PUser> patients = await _context.Users.ToListAsync();
                 List<Dialog> dialogs = await _context.Dialogs.ToListAsync();
 
                 // Retrieve patients that do not exist in the Dialog table
-                IEnumerable<Patient> patientsNotInDialog = patients.Where(p => !dialogs.Any(d => d.TelegramUserId == p.TelegramUserId.ToString() && d.TelegramUserId != null));
+                IEnumerable<P2PUser> patientsNotInDialog = patients.Where(p => !dialogs.Any(d => d.TelegramUserId == p.TelegramUserId.ToString() && d.TelegramUserId != null));
 
                 var message = text;
                 foreach(var item in patients)
@@ -139,7 +161,7 @@ namespace MindMate.Controllers
                     if(item.TelegramUserId != 0 && !item.BlockedByUser)
                     {
                         tuserid = item.TelegramUserId;
-                        await TelegramBot.DoConversation(item.TelegramUserId, message);
+                        await TelegramBot.DoConversation(item.TelegramUserId, message, ParseMode.MarkdownV2);
                     }
                 }
             }
@@ -147,7 +169,7 @@ namespace MindMate.Controllers
             {
                 if(ex.Message == "Forbidden: bot was blocked by the user")
                 {
-                    var patient = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == tuserid);
+                    var patient = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == tuserid);
                     patient.BlockedByUser = true;
                     await _context.SaveChangesAsync();
                 }
@@ -158,28 +180,14 @@ namespace MindMate.Controllers
             }
         }
 
-        private Conversation GetOrCreateConversation(long chatId)
+        private async Task SaveUser(long patientId, string? username, string? firstname, string? lastname, string language)
         {
-            if (_userConversations.TryGetValue(chatId, out var conversation))
-            {
-                return conversation;
-            }
-            else
-            {
-                conversation = _openAIAPI.Chat.CreateConversation();
-                _userConversations.TryAdd(chatId, conversation);
-                return conversation;
-            }
-        }
-
-        private async Task SavePatient(long patientId, string? username, string? firstname, string? lastname, string language)
-        {
-            Patient ifExists = await _context.Patients.SingleOrDefaultAsync(x => x.TelegramUserId == patientId);
+            P2PUser ifExists = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == patientId);
 
             // Check if user exists, if not, put it in database
             if(ifExists == null)
             {
-                Patient patient = new Patient()
+                P2PUser user = new P2PUser()
                 {
                     Username = username,
                     TelegramUserId = patientId,
@@ -189,9 +197,46 @@ namespace MindMate.Controllers
                     Language = language
                 };
 
-                _context.Patients.Add(patient);
+                _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Saved: {patient.Id}, {patient.Username}");
+                _logger.LogInformation($"Saved: {user.Id}, {user.Username}");
+            }
+        }
+
+        static bool IsValidUsdtTrc20Address(string address)
+        {
+            // Adjust the regex pattern based on the actual format of USDT TRC20 addresses
+            string pattern = @"^T[a-km-zA-HJ-NP-Z1-9]{33}$";
+
+            Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            return regex.IsMatch(address);
+        }
+
+        public async Task<EvaluationResult> GetEvaluationResult (string address)
+        {
+            string apiUrl = "https://akma-aml.azurewebsites.net/tron/check_address/" + address;
+            try
+            {
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        EvaluationResult result = JsonConvert.DeserializeObject<EvaluationResult>(jsonResponse);
+                        return result;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+                Console.WriteLine($"Exception: {ex.Message}");
             }
         }
     }

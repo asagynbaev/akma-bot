@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace MindMate.Entities
 {
     // Модель для записи пациентов
-    public class Patient
+    public class P2PUser
     {
         [Key]
         public int Id { get; set; }
@@ -17,6 +17,8 @@ namespace MindMate.Entities
         public string? Lastname { get; set; }
 
         public string? Language { get; set; }
+
+        public int Checks { get; set; } = 3;
 
         public DateTime? CreatedAt { get; set; }
 
