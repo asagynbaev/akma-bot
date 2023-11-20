@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MindMate.Entities;
-using Telegram.Bot;
+// using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -14,13 +14,13 @@ namespace MindMate.Controllers
     {
         private readonly ILogger<MainController> _logger;
         private readonly DialogContext _context;
-        private readonly TelegramBotClient _telegramBotClient;
+        // private readonly TelegramBotClient _telegramBotClient;
 
         public MainController(ILogger<MainController> logger, DialogContext context)
         {
             _logger = logger;
             _context = context;
-            _telegramBotClient = TelegramBot.GetTelegramBot();
+            // _telegramBotClient = TelegramBot.GetTelegramBot();
         }
 
         //private TelegramBotClient bot = TelegramBot.GetTelegramBot();
@@ -58,8 +58,12 @@ namespace MindMate.Controllers
                         else if(update.Message.Text == "/check")
                         {
                             //P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-                            string newresult = await TelegramBot.DoConversation(chatId, "Для того, чтобы проверить адрес USDT (TRC20), скопируйте его в буфер обмена и вставьте его в поле ниже. \n \n" + 
-                                "Пример: TG6Udj1YeqXQhr7aSteVf28iWmV1vMtWeA", ParseMode.Html);
+                            string newresult = await TelegramBot.DoConversation(
+                                chatId, 
+                                "Для того, чтобы проверить адрес USDT (TRC20), скопируйте его в буфер обмена и вставьте его в поле ниже. \n \n" + 
+                                "Пример: TG6Udj1YeqXQhr7aSteVf28iWmV1vMtWeA", 
+                                ParseMode.Html
+                            );
                         }
                         else if(update.Message.Text == "/about")
                         {
@@ -73,8 +77,6 @@ namespace MindMate.Controllers
                         }
                         else
                         {
-                            //P2PUser lang = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-
                             if (IsValidUsdtTrc20Address(update.Message.Text))
                             {
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);

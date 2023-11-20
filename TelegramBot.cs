@@ -54,8 +54,8 @@ namespace MindMate
             }
             catch (Exception ex)
             {
-                return null;
                 Console.WriteLine($"Exception: {ex.Message}");
+                return null;
             }
         }
     }
