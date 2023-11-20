@@ -80,10 +80,14 @@ namespace MindMate.Controllers
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
                                 if(result != null)
                                 {
-                                    await TelegramBot.DoConversation(chatId, $"Степень риска кошелька (от 0 до 100): {result.evaluation.FinalEvaluation} \n" + 
-                                        $"Количество транзакций: {result.evaluation.Transactions} \n" + 
-                                        $"Находится в санкционном списке OFAC: {(result.evaluation.Blacklist ? "Да" : "Нет")} \n" + 
-                                        $"Баланс кошелька: {result.evaluation.Balance}", ParseMode.Html);
+                                    await TelegramBot.DoConversation(
+                                        chatId, 
+                                        $"📈 Степень риска кошелька (от 0 до 100): {result.evaluation.FinalEvaluation} \n" + 
+                                        $"📊 Количество транзакций: {result.evaluation.Transactions} \n" + 
+                                        $"⛔️ Находится в санкционном списке OFAC: {(result.evaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n" + 
+                                        $"💰 Баланс кошелька: {result.evaluation.Balance} USDT", 
+                                        ParseMode.Html
+                                    );
                                 }  
                                 else
                                 {
