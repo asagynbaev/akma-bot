@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MindMate.Entities;
-// using Telegram.Bot;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -14,16 +14,16 @@ namespace MindMate.Controllers
     {
         private readonly ILogger<MainController> _logger;
         private readonly DialogContext _context;
-        // private readonly TelegramBotClient _telegramBotClient;
+        private readonly TelegramBotClient _telegramBotClient;
 
         public MainController(ILogger<MainController> logger, DialogContext context)
         {
             _logger = logger;
             _context = context;
-            // _telegramBotClient = TelegramBot.GetTelegramBot();
+            _telegramBotClient = TelegramBot.GetTelegramBot();
         }
 
-        //private TelegramBotClient bot = TelegramBot.GetTelegramBot();
+        private TelegramBotClient bot = TelegramBot.GetTelegramBot();
 
         [HttpPost("talk")]
         public async Task Post([FromBody] Update update) //Update receiver method
@@ -39,7 +39,7 @@ namespace MindMate.Controllers
                     if (update.Message.Text == "/start")
                     {
                         await SaveUser(update.Message.Chat.Id, update.Message.Chat.Username, update.Message.Chat.FirstName, update.Message.Chat.LastName, "ru");
-                        await TelegramBot.DoConversation(
+                        await TelegramBot.SendMessage(
                             update.Message.Chat.Id,
                             "Привет! 👋 Добро пожаловать в Akma! AML бот для проверки чистоты USDT Tether TRC20 кошелька! \n \n " + 
                             "Мы здесь, чтобы обеспечить вас надежным инструментом для проверки кошелька на соответствие стандартам безопасности и предотвращения отмывания денег. " + 
@@ -53,12 +53,12 @@ namespace MindMate.Controllers
                         if(update.Message.Text == "/balance")
                         {
                             P2PUser? user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-                            string newresult = await TelegramBot.DoConversation(chatId, "Количество проверок: " + user?.Checks.ToString(), ParseMode.Html);
+                            await TelegramBot.SendMessage(chatId, "Количество проверок: " + user?.Checks.ToString(), ParseMode.Html);
                         }
                         else if(update.Message.Text == "/check")
                         {
                             //P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-                            string newresult = await TelegramBot.DoConversation(
+                            await TelegramBot.SendMessage(
                                 chatId, 
                                 "Для того, чтобы проверить адрес USDT (TRC20), скопируйте его в буфер обмена и вставьте его в поле ниже. \n \n" + 
                                 "Пример: TG6Udj1YeqXQhr7aSteVf28iWmV1vMtWeA", 
@@ -68,7 +68,7 @@ namespace MindMate.Controllers
                         else if(update.Message.Text == "/about")
                         {
                             //P2PUser user = await _context.Users.SingleOrDefaultAsync(x => x.TelegramUserId == update.Message.Chat.Id);
-                            string newresult = await TelegramBot.DoConversation(
+                            await TelegramBot.SendMessage(
                                 chatId, 
                                 "Akma AML Scanner обеспечивает надежную защиту криптовалютных транзакций в сети <b>Tron(TRC20)</b>, применяя интеллектуальный алгоритм анализа для проверки адресов кошельков. \n \n " + 
                                 "Более подробнее о Akma можно прочитать на сайте: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/\">Akma AML Screener</a>",
@@ -79,11 +79,14 @@ namespace MindMate.Controllers
                         {
                             if (IsValidUsdtTrc20Address(update.Message.Text))
                             {
+                                var message = await TelegramBot.SendMessage(chatId, DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
+                                
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
                                 if(result != null)
                                 {
-                                    await TelegramBot.DoConversation(
-                                        chatId, 
+                                    await TelegramBot.UpdateMessage(
+                                        chatId,
+                                        message,
                                         $"📈 Степень риска кошелька (от 0 до 100): {result.evaluation.FinalEvaluation} \n" + 
                                         $"📊 Количество транзакций: {result.evaluation.Transactions} \n" + 
                                         $"⛔️ Находится в санкционном списке OFAC: {(result.evaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n" + 
@@ -93,12 +96,12 @@ namespace MindMate.Controllers
                                 }  
                                 else
                                 {
-                                    await TelegramBot.DoConversation(chatId, "Server Error. Please contact @azimbek.eth", ParseMode.Html);
+                                    await TelegramBot.SendMessage(chatId, "Server Error. Please contact @azimbek.eth", ParseMode.Html);
                                 }
                             }
                             else
                             {
-                                await TelegramBot.DoConversation(chatId, "Invalid USDT TRC20 address.", ParseMode.Html);
+                                await TelegramBot.SendMessage(chatId, "Invalid USDT TRC20 address.", ParseMode.Html);
                             }
 
                             var dialog = new Dialog
@@ -165,7 +168,7 @@ namespace MindMate.Controllers
                     if(item.TelegramUserId != 0 && !item.BlockedByUser)
                     {
                         tuserid = item.TelegramUserId;
-                        await TelegramBot.DoConversation(item.TelegramUserId, message, ParseMode.MarkdownV2);
+                        await TelegramBot.SendMessage(item.TelegramUserId, message, ParseMode.MarkdownV2);
                     }
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace MindMate
@@ -19,13 +20,24 @@ namespace MindMate
             return client;
         }
 
-        public static async Task<string> DoConversation(long chatId, string userMessage, ParseMode mode)
+        public static async Task<Message> SendMessage(long chatId, string userMessage, ParseMode mode)
         {
-            string holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
-            var message = await client.SendTextMessageAsync( chatId: chatId, text: holdOnText, parseMode: mode);
+            //string holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
+            var message = await client.SendTextMessageAsync( chatId: chatId, text: userMessage, parseMode: mode);
+            return message;
+            //await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
+            //await Task.Delay(3000);
 
-            await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
-            await Task.Delay(3000);
+            //await client.EditMessageTextAsync(chatId: chatId, messageId: message.MessageId, text: userMessage, parseMode: mode);
+            //return "address should be here";
+        }
+
+        public static async Task<string> UpdateMessage(long chatId, Message message, string userMessage, ParseMode mode)
+        {
+            //var message = await client.SendTextMessageAsync( chatId: chatId, text: holdOnText, parseMode: mode);
+
+            //await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
+            //await Task.Delay(3000);
 
             await client.EditMessageTextAsync(chatId: chatId, messageId: message.MessageId, text: userMessage, parseMode: mode);
             return "address should be here";
