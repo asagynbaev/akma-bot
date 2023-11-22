@@ -1,4 +1,4 @@
-# MindMate is an AI Mental Health specialist, which can diagnose and support you in any stage of the problem
+# Akma is a telegram bot which connects to the AML API, which will return the result of TRC20 wallet risk
 
 Core provide a connection between Telegram bot and OpenAI API.
 
