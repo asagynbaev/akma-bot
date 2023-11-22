@@ -97,11 +97,11 @@ namespace MindMate.Controllers
                                     await TelegramBot.UpdateMessage(
                                         chatId,
                                         message,
-                                        $"📈 Степень риска кошелька (от 0 до 100): {result.FinalEvaluation.FinalEvaluation} \n" + 
-                                        $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n" + 
-                                        $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n" + 
-                                        $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT" +
-                                        $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction}" + 
+                                        $"📈 Степень риска кошелька (от 0 до 100): {result.FinalEvaluation.FinalEvaluation} \n\n" + 
+                                        $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n\n" + 
+                                        $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
+                                        $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT \n\n" +
+                                        $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction} \n\n" + 
                                         $"🕠 Дата последней транзакции: {result.FinalEvaluation.Last_Transaction}", 
                                         ParseMode.Html
                                     );
