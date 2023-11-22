@@ -82,21 +82,38 @@ namespace MindMate.Controllers
                                 var message = await TelegramBot.SendMessage(chatId, DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
                                 
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
-                                if(result != null)
+                                
+                                if((result != null) && (result.Message != null))
                                 {
                                     await TelegramBot.UpdateMessage(
                                         chatId,
                                         message,
-                                        $"📈 Степень риска кошелька (от 0 до 100): {result.evaluation.FinalEvaluation} \n" + 
-                                        $"📊 Количество транзакций: {result.evaluation.Transactions} \n" + 
-                                        $"⛔️ Находится в санкционном списке OFAC: {(result.evaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n" + 
-                                        $"💰 Баланс кошелька: {result.evaluation.Balance} USDT", 
+                                        $"Внимание! {result.Message}",
+                                        ParseMode.Html
+                                    );
+                                }
+                                else if((result != null) && (result.FinalEvaluation != null))
+                                {
+                                    await TelegramBot.UpdateMessage(
+                                        chatId,
+                                        message,
+                                        $"📈 Степень риска кошелька (от 0 до 100): {result.FinalEvaluation.FinalEvaluation} \n" + 
+                                        $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n" + 
+                                        $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n" + 
+                                        $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT" +
+                                        $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction}" + 
+                                        $"🕠 Дата последней транзакции: {result.FinalEvaluation.Last_Transaction}", 
                                         ParseMode.Html
                                     );
                                 }  
                                 else
                                 {
-                                    await TelegramBot.SendMessage(chatId, "Server Error. Please contact @azimbek.eth", ParseMode.Html);
+                                    await TelegramBot.UpdateMessage(
+                                        chatId,
+                                        message,
+                                        $"Упс! Свяжитесь с администратором. @akma_aml_support \n Ошибка: {result.Error}",
+                                        ParseMode.Html
+                                    );
                                 }
                             }
                             else
