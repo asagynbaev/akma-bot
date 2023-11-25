@@ -100,6 +100,7 @@ namespace MindMate.Controllers
                                         $"📈 Степень риска(0-100): {result.FinalEvaluation.FinalEvaluation} \n\n" + 
                                         $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n\n" + 
                                         $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
+                                        $"💀 Опасность во версии TronScan: {result.FinalEvaluation.RedTag} \n\n" + 
                                         $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT \n\n" +
                                         $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction} \n\n" + 
                                         $"🕠 Дата последней транзакции: {result.FinalEvaluation.Last_Transaction}", 
