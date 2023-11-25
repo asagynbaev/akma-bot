@@ -12,6 +12,7 @@ namespace MindMate
             public int Transactions { get; set; }
             public bool Blacklist { get; set; }
             public double Balance { get; set; }
+            public string? RegTag { get; set; }
             public DateTime First_Transaction { get; set; }
             public DateTime Last_Transaction { get; set; }
         }
