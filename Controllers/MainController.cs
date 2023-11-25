@@ -71,7 +71,9 @@ namespace MindMate.Controllers
                             await TelegramBot.SendMessage(
                                 chatId, 
                                 "Akma AML Scanner обеспечивает надежную защиту криптовалютных транзакций в сети <b>Tron(TRC20)</b>, применяя интеллектуальный алгоритм анализа для проверки адресов кошельков. \n \n " + 
-                                "Более подробнее о Akma можно прочитать на сайте: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/\">Akma AML Screener</a>",
+                                "Более подробнее о Akma можно прочитать на сайте: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/\">Akma AML Screener</a> \n \n " +
+                                "Перед тем, как начать использование бота, пожалуйста, прочтите правила использования: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/pravila-ispolzovaniya\">тут</a> \n \n " +
+                                "А также ознакомьтесь с политикой конфиденциальности: <a href=\"https://akma-aml-technologies-inc.gitbook.io/welcome/politika-konfidencialnosti\">тут</a> \n \n ",
                                 ParseMode.Html
                             );
                         }
@@ -100,7 +102,7 @@ namespace MindMate.Controllers
                                         $"📈 Степень риска(0-100): {result.FinalEvaluation.FinalEvaluation} \n\n" + 
                                         $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n\n" + 
                                         $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
-                                        $"💀 Опасность во версии TronScan: {result.FinalEvaluation.RedTag} \n\n" + 
+                                        $"💀 Опасность во версии TronScan: <b>{result.FinalEvaluation.RedTag}</b> \n\n" + 
                                         $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT \n\n" +
                                         $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction} \n\n" + 
                                         $"🕠 Дата последней транзакции: {result.FinalEvaluation.Last_Transaction}", 
