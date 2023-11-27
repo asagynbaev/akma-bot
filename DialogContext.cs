@@ -16,5 +16,7 @@ namespace MindMate
         public DbSet<P2PUser> Users { get; set; }
 
         public DbSet<ErrorLogs> Errors { get; set; }
+
+        public DbSet<Blacklist> Blacklists { get; set; }
     }
 }
