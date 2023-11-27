@@ -109,11 +109,31 @@ namespace MindMate.Controllers
                                         ParseMode.Html
                                     );
 
+                                    if(result.FinalEvaluation.Blacklist)
+                                    {
+                                        Blacklist blacklist = new Blacklist()
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Address = update.Message.Text,
+                                            BlacklistType = "OFAC",
+                                        };
+                                    }
+
+                                    if(result.FinalEvaluation.RedTag != "Обычный")
+                                    {
+                                        Blacklist blacklist = new Blacklist()
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Address = update.Message.Text,
+                                            BlacklistType = "TronScan",
+                                        };
+                                    }
+
                                     var dialog = new Dialog
                                     {
                                         Username = update.Message.Chat.Username,
                                         UserMessage = update.Message.Text,
-                                        BotResponse =  result.ToString(),
+                                        BotResponse =  $"Message: {result.Message} Error: {result.Error} Evaluation: {result.FinalEvaluation.FinalEvaluation}",
                                         Timestamp = DateTime.UtcNow,
                                         TelegramUserId = update.Message.Chat.Id.ToString()
                                     };
