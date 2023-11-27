@@ -108,6 +108,18 @@ namespace MindMate.Controllers
                                         $"🕠 Дата последней транзакции: {result.FinalEvaluation.Last_Transaction}", 
                                         ParseMode.Html
                                     );
+
+                                    var dialog = new Dialog
+                                    {
+                                        Username = update.Message.Chat.Username,
+                                        UserMessage = update.Message.Text,
+                                        BotResponse =  result.ToString(),
+                                        Timestamp = DateTime.UtcNow,
+                                        TelegramUserId = update.Message.Chat.Id.ToString()
+                                    };
+
+                                    _context.Dialogs.Add(dialog);
+                                    _context.SaveChanges();
                                 }  
                                 else
                                 {
@@ -123,18 +135,6 @@ namespace MindMate.Controllers
                             {
                                 await TelegramBot.SendMessage(chatId, "Invalid USDT TRC20 address.", ParseMode.Html);
                             }
-
-                            var dialog = new Dialog
-                            {
-                                Username = update.Message.Chat.Username,
-                                UserMessage = update.Message.Text,
-                                BotResponse =  "write smth here...",
-                                Timestamp = DateTime.UtcNow,
-                                TelegramUserId = update.Message.Chat.Id.ToString()
-                            };
-
-                            _context.Dialogs.Add(dialog);
-                            _context.SaveChanges();
                         }
                     }
                 }

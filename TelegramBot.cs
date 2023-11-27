@@ -7,41 +7,24 @@ namespace MindMate
 {
 	public class TelegramBot
 	{
-        private static TelegramBotClient? client { get; set; }
+        private static TelegramBotClient client { get; set; }
 
         public static TelegramBotClient GetTelegramBot()
         {
             string bot_key = DotNetEnv.Env.GetString("TG_BOT");
 
-            if (client != null)
-                return client;
-                
             client = new TelegramBotClient(bot_key);
             return client;
         }
 
-        public static async Task<Message> SendMessage(long chatId, string userMessage, ParseMode mode)
-        {
-            //string holdOnText = DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU");
-            var message = await client.SendTextMessageAsync( chatId: chatId, text: userMessage, parseMode: mode);
-            return message;
-            //await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
-            //await Task.Delay(3000);
+        public static async Task<Message> SendMessage(long chatId, string userMessage, ParseMode mode) => 
+            await client.SendTextMessageAsync( chatId: chatId, text: userMessage, parseMode: mode);
 
-            //await client.EditMessageTextAsync(chatId: chatId, messageId: message.MessageId, text: userMessage, parseMode: mode);
-            //return "address should be here";
-        }
-
-        public static async Task<string> UpdateMessage(long chatId, Message message, string userMessage, ParseMode mode)
-        {
-            //var message = await client.SendTextMessageAsync( chatId: chatId, text: holdOnText, parseMode: mode);
-
-            //await client.SendChatActionAsync(chatId, Telegram.Bot.Types.Enums.ChatAction.Typing); // Отправляем "typing" состояние
-            //await Task.Delay(3000);
-
+        public static async Task UpdateMessage(long chatId, Message message, string userMessage, ParseMode mode) =>
             await client.EditMessageTextAsync(chatId: chatId, messageId: message.MessageId, text: userMessage, parseMode: mode);
-            return "address should be here";
-        }
+
+        public static async Task DeleteMessage(long chatId, Message message) =>
+            await client.DeleteMessageAsync(chatId: chatId, messageId: message.MessageId);
 
         public static async Task<EvaluationResult> GetEvaluationResult (string address)
         {
