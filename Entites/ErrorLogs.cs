@@ -23,6 +23,8 @@ namespace MindMate.Entities
 
         public string? CausedInMethod { get; set; }
 
+        public string? OrderNumber { get; set; }
+
         public DateTime? Timestamp { get; set; }
     }
 }

@@ -28,7 +28,7 @@ namespace MindMate
 
         public static async Task<EvaluationResult> GetEvaluationResult (string address)
         {
-            string apiUrl = "https://akma-aml.azurewebsites.net/tron/check_address/" + address;
+            string apiUrl = $"{DotNetEnv.Env.GetString("API_URL")}tron/check_address/" + address;
             try
             {
                 using (HttpClient httpClient = new HttpClient())
@@ -52,6 +52,14 @@ namespace MindMate
                 Console.WriteLine($"Exception: {ex.Message}");
                 return null;
             }
+        }
+
+        public static string GenerateOrderNumber()
+        {
+            DateTime now = DateTime.UtcNow;
+            long unixTimestamp = ((DateTimeOffset)now).ToUnixTimeSeconds();
+            string orderNumber = unixTimestamp.ToString().Substring(3); // Removing the first three digits
+            return orderNumber;
         }
     }
 }

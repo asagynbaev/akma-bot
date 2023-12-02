@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MindMate;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MindMate.Migrations
 {
     [DbContext(typeof(DialogContext))]
-    partial class DialogContextModelSnapshot : ModelSnapshot
+    [Migration("20231130183306_OrderNumber")]
+    partial class OrderNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,9 +37,8 @@ namespace MindMate.Migrations
                     b.Property<string>("BlacklistType")
                         .HasColumnType("text");
 
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("timestamp with time zone");
@@ -57,9 +59,8 @@ namespace MindMate.Migrations
                     b.Property<string>("BotResponse")
                         .HasColumnType("text");
 
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TelegramUserId")
                         .HasColumnType("text");
@@ -91,9 +92,6 @@ namespace MindMate.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Message")
-                        .HasColumnType("text");
-
-                    b.Property<string>("OrderNumber")
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("Timestamp")

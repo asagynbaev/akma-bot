@@ -81,8 +81,21 @@ namespace MindMate.Controllers
                         {
                             if (IsValidUsdtTrc20Address(update.Message.Text))
                             {
+                                var orderNumber = TelegramBot.GenerateOrderNumber();
                                 var message = await TelegramBot.SendMessage(chatId, DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
                                 
+                                var preResult = await _context.Blacklists.SingleOrDefaultAsync(x => x.Address == update.Message.Text);
+                                if(preResult != null)
+                                {
+                                    await TelegramBot.UpdateMessage(
+                                        chatId,
+                                        message,
+                                        $"Внимание! адрес <b>{update.Message.Text}</b> находится в санкционном списке OFAC или является подозрительным. \n \n " +
+                                        "Не рекомендуется заключать сделки с этим адресом.",
+                                        ParseMode.Html
+                                    );
+                                }
+
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
                                 
                                 if((result != null) && (result.Message != null))
@@ -109,24 +122,32 @@ namespace MindMate.Controllers
                                         ParseMode.Html
                                     );
 
-                                    if(result.FinalEvaluation.Blacklist)
+                                    if(result.FinalEvaluation.Blacklist == true)
                                     {
-                                        Blacklist blacklist = new Blacklist()
+                                        Blacklist blacklist = new Blacklist
                                         {
                                             Id = Guid.NewGuid(),
                                             Address = update.Message.Text,
                                             BlacklistType = "OFAC",
+                                            OrderNumber = orderNumber
                                         };
+
+                                        _context.Blacklists.Add(blacklist);
+                                        _context.SaveChanges();
                                     }
 
-                                    if(result.FinalEvaluation.RedTag != "Обычный")
+                                    if(result.FinalEvaluation.RedTag == "Подозрительный")
                                     {
-                                        Blacklist blacklist = new Blacklist()
+                                        Blacklist blacklist = new Blacklist
                                         {
                                             Id = Guid.NewGuid(),
                                             Address = update.Message.Text,
                                             BlacklistType = "TronScan",
+                                            OrderNumber = orderNumber
                                         };
+
+                                        _context.Blacklists.Add(blacklist);
+                                        _context.SaveChanges();
                                     }
 
                                     var dialog = new Dialog
@@ -135,6 +156,7 @@ namespace MindMate.Controllers
                                         UserMessage = update.Message.Text,
                                         BotResponse =  $"Message: {result.Message} Error: {result.Error} Evaluation: {result.FinalEvaluation.FinalEvaluation}",
                                         Timestamp = DateTime.UtcNow,
+                                        OrderNumber = orderNumber,
                                         TelegramUserId = update.Message.Chat.Id.ToString()
                                     };
 

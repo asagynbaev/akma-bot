@@ -11,5 +11,9 @@ namespace MindMate.Entities
         public string? Address { get; set; }
 
         public string? BlacklistType { get; set; }
+
+        public string OrderNumber { get; set; }
+
+        public DateTime createdAt { get; set; }
     }
 }

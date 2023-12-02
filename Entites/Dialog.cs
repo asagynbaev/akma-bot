@@ -8,6 +8,8 @@ namespace MindMate.Entities
         [Key]
         public int Id { get; set; }
 
+        public string OrderNumber { get; set; }
+
         public string? Username { get; set; }
 
         public string? TelegramUserId { get; set; }
