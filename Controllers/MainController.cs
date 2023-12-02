@@ -84,8 +84,8 @@ namespace MindMate.Controllers
                                 var orderNumber = TelegramBot.GenerateOrderNumber();
                                 var message = await TelegramBot.SendMessage(chatId, $"Заказ #{orderNumber} \n \n " + DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
                                 
-                                var preResult = await _context.Blacklists.SingleOrDefaultAsync(x => x.Address == update.Message.Text);
-                                if(preResult != null)
+                                var blacklistExists = await _context.Blacklists.SingleOrDefaultAsync(x => x.Address == update.Message.Text);
+                                if(blacklistExists != null)
                                 {
                                     await TelegramBot.UpdateMessage(
                                         chatId,
@@ -93,6 +93,20 @@ namespace MindMate.Controllers
                                         $"Заказ #{orderNumber} \n \n " +
                                         $"Внимание! адрес <b>{update.Message.Text}</b> находится в санкционном списке OFAC или является подозрительным. \n \n " +
                                         "Не рекомендуется заключать сделки с этим адресом.",
+                                        ParseMode.Html
+                                    );
+                                    return;
+                                }
+
+                                var whitelist = await _context.Whitelists.SingleOrDefaultAsync(x => x.Address == update.Message.Text);
+                                if(whitelist != null)
+                                {
+                                    await TelegramBot.UpdateMessage(
+                                        chatId,
+                                        message,
+                                        $"Заказ #{orderNumber}\n\n" +
+                                        $"Внимание! Адрес *{update.Message.Text}* является биржевым ({whitelist.AccountName}).\n\n" +
+                                        "Рекомендуем вам быть осторожными при совершении сделок с этим адресом. Учитывайте, что клиенты бирж обычно проходят процедуру KYC.",
                                         ParseMode.Html
                                     );
                                     return;
