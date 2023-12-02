@@ -18,5 +18,7 @@ namespace MindMate
         public DbSet<ErrorLogs> Errors { get; set; }
 
         public DbSet<Blacklist> Blacklists { get; set; }
+
+        public DbSet<Whitelist> Whitelists { get; set; }
     }
 }

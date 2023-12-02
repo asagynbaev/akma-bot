@@ -82,7 +82,7 @@ namespace MindMate.Controllers
                             if (IsValidUsdtTrc20Address(update.Message.Text))
                             {
                                 var orderNumber = TelegramBot.GenerateOrderNumber();
-                                var message = await TelegramBot.SendMessage(chatId, DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
+                                var message = await TelegramBot.SendMessage(chatId, $"Заказ #{orderNumber} \n \n " + DotNetEnv.Env.GetString("HOLD_ON_MESSAGE_RU"), ParseMode.Html);
                                 
                                 var preResult = await _context.Blacklists.SingleOrDefaultAsync(x => x.Address == update.Message.Text);
                                 if(preResult != null)
@@ -90,10 +90,12 @@ namespace MindMate.Controllers
                                     await TelegramBot.UpdateMessage(
                                         chatId,
                                         message,
+                                        $"Заказ #{orderNumber} \n \n " +
                                         $"Внимание! адрес <b>{update.Message.Text}</b> находится в санкционном списке OFAC или является подозрительным. \n \n " +
                                         "Не рекомендуется заключать сделки с этим адресом.",
                                         ParseMode.Html
                                     );
+                                    return;
                                 }
 
                                 var result = await TelegramBot.GetEvaluationResult(update.Message.Text);
@@ -106,12 +108,14 @@ namespace MindMate.Controllers
                                         $"Внимание! {result.Message}",
                                         ParseMode.Html
                                     );
+                                    return;
                                 }
                                 else if((result != null) && (result.FinalEvaluation != null))
                                 {
                                     await TelegramBot.UpdateMessage(
                                         chatId,
                                         message,
+                                        $"Номер проверки: #{orderNumber} \n \n " +
                                         $"📈 Степень риска(0-100): {result.FinalEvaluation.FinalEvaluation} \n\n" + 
                                         $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n\n" + 
                                         $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
@@ -129,7 +133,8 @@ namespace MindMate.Controllers
                                             Id = Guid.NewGuid(),
                                             Address = update.Message.Text,
                                             BlacklistType = "OFAC",
-                                            OrderNumber = orderNumber
+                                            OrderNumber = orderNumber,
+                                            createdAt = DateTime.UtcNow
                                         };
 
                                         _context.Blacklists.Add(blacklist);
@@ -143,7 +148,8 @@ namespace MindMate.Controllers
                                             Id = Guid.NewGuid(),
                                             Address = update.Message.Text,
                                             BlacklistType = "TronScan",
-                                            OrderNumber = orderNumber
+                                            OrderNumber = orderNumber,
+                                            createdAt = DateTime.UtcNow
                                         };
 
                                         _context.Blacklists.Add(blacklist);
@@ -165,12 +171,14 @@ namespace MindMate.Controllers
                                 }  
                                 else
                                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                                     await TelegramBot.UpdateMessage(
                                         chatId,
                                         message,
                                         $"Упс! Свяжитесь с администратором. @akma_aml_support \n Ошибка: {result.Error}",
                                         ParseMode.Html
                                     );
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                                 }
                             }
                             else
