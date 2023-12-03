@@ -105,8 +105,8 @@ namespace MindMate.Controllers
                                         chatId,
                                         message,
                                         $"Заказ #{orderNumber}\n\n" +
-                                        $"Внимание! Адрес *{update.Message.Text}* является биржевым ({whitelist.AccountName}).\n\n" +
-                                        "Рекомендуем вам быть осторожными при совершении сделок с этим адресом. Учитывайте, что клиенты бирж обычно проходят процедуру KYC.",
+                                        $"Внимание! Адрес <b>{update.Message.Text}</b> является биржевым ({whitelist.AccountName}).\n\n" +
+                                        "Учитывайте, что клиенты бирж обычно проходят процедуру KYC.",
                                         ParseMode.Html
                                     );
                                     return;
