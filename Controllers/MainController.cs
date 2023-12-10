@@ -132,7 +132,7 @@ namespace MindMate.Controllers
                                         $"Номер проверки: #{orderNumber} \n \n " +
                                         $"📈 Степень риска(0-100): {result.FinalEvaluation.FinalEvaluation} \n\n" + 
                                         $"📊 Количество транзакций: {result.FinalEvaluation.Transactions} \n\n" + 
-                                        $"⛔️ Находится в санкционном списке OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
+                                        $"⛔️ Санкционный список OFAC: {(result.FinalEvaluation.Blacklist ? "✅ Да" : "❌ Нет")} \n\n" + 
                                         $"💀 Опасность во версии TronScan: <b>{result.FinalEvaluation.RedTag}</b> \n\n" + 
                                         $"💰 Баланс кошелька: {result.FinalEvaluation.Balance} USDT \n\n" +
                                         $"🕐 Дата первой транзакции: {result.FinalEvaluation.First_Transaction} \n\n" + 
@@ -211,28 +211,32 @@ namespace MindMate.Controllers
             }
         }
         
-        // [HttpGet("send-notification/{text}")]
-        // public async Task SendReminderMessage(string text)
-        // {
-        //     try
-        //     {
-        //         List<P2PUser> patients = await _context.Users.ToListAsync();
-        //         var message = text;
-        //         foreach(var item in patients)
-        //         {
-        //             if(item.TelegramUserId != 0)
-        //             {
-        //                 await TelegramBot.DoConversation(item.TelegramUserId, message);
-        //             }
-        //         }
-        //     }
-        //     catch(Exception ex)
-        //     {
-        //         _logger.LogError(ex.Message);
-        //         _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
-        //         await _context.SaveChangesAsync();
-        //     }
-        // }
+        [HttpGet("send-notification/{text}")]
+        public async Task SendReminderMessage(string text)
+        {
+            try
+            {
+                List<P2PUser> patients = await _context.Users.ToListAsync();
+                var message = text;
+                foreach(var item in patients)
+                {
+                    if(item.TelegramUserId != 0)
+                    {
+                        await TelegramBot.SendMessage(
+                            item.TelegramUserId, 
+                            text,
+                            ParseMode.Html
+                        );
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _context.Errors.Add(new ErrorLogs(ex.Message, ex.InnerException.Message, "talk"));
+                await _context.SaveChangesAsync();
+            }
+        }
 
         [HttpGet("send-message-to-users-who-didnt-use/{text}")]
         public async Task SendFirst(string text)
